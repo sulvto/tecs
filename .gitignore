@@ -1,0 +1,5 @@
+projects/
+tools/
+*.cmp
+*.tst
+*.out
