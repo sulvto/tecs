@@ -20,7 +20,7 @@ public class Assembler {
 
     public Assembler(File input) {
         this.input = input;
-        this.output = new File(input.getParentFile().getPath() + File.separator + input.getName().replaceAll("\\.\\w+","")+ ".hack");
+        this.output = new File(input.getParentFile().getPath() + File.separator + input.getName().replaceAll("\\.\\w+", "") + ".hack");
         symbolTable = new SymbolTable();
     }
 
@@ -36,23 +36,27 @@ public class Assembler {
             parser.advance();
             if (parser.commandType() == Parser.CommandType.L) {
                 symbolTable.addEntry(parser.symbol(), n);
+            } else {
+                n++;
             }
-            n++;
         }
 
         List<String> output = new ArrayList<>();
 
         parser.init(new FileInputStream(input));
-        n = 0;
+        int nextRAM = 16;
         while (parser.hasMoreCommands()) {
             parser.advance();
 
             switch (parser.commandType()) {
                 case C:
                     String asm = "111";
-                    asm += new String(Code.dest(parser.dest()));
-                    asm += new String(Code.comp(parser.comp()));
-                    asm += new String(Code.jump(parser.jump()));
+                    String comp = parser.comp();
+                    asm += new String(Code.comp(comp));
+                    String dest = parser.dest();
+                    asm += new String(Code.dest(dest));
+                    String jump = parser.jump();
+                    asm += new String(Code.jump(jump));
                     output.add(asm);
                     break;
                 case L:
@@ -60,24 +64,25 @@ public class Assembler {
                 case A:
                     asm = "0";
                     String symbol = parser.symbol();
-                    if (symbol.matches("\\w+")) {
+                    if (symbol.matches("\\d+")) {
+                        asm += toBinaryString(Integer.valueOf(symbol), 15);
+                    } else if (symbol.matches("\\w+")) {
                         if (symbolTable.contains(symbol)) {
-                            asm += toHexString(symbolTable.getAddress(symbol), 15);
+                            asm += toBinaryString(symbolTable.getAddress(symbol), 15);
                         } else {
-                            symbolTable.addEntry(symbol, n);
-                            asm += toHexString(n, 15);
+                            int addr = nextRAM++;
+                            symbolTable.addEntry(symbol, addr);
+                            asm += toBinaryString(addr, 15);
                         }
-                    } else if (symbol.matches("\\d+")) {
-                        asm += toHexString(Integer.valueOf(symbol), 15);
                     } else {
-                        throw new Error("Unknown symbol");
+                        throw new Error("Unknown symbol:" + symbol);
                     }
                     output.add(asm);
                     break;
                 default:
                     throw new Error("Unknown command type:" + parser.commandType());
             }
-            n++;
+
         }
 
 
@@ -93,8 +98,8 @@ public class Assembler {
     private final File output;
     private final SymbolTable symbolTable;
 
-    private String toHexString(int input, int bit) {
-        StringBuilder result = new StringBuilder(Integer.toHexString(input));
+    private String toBinaryString(int input, int bit) {
+        StringBuilder result = new StringBuilder(Integer.toBinaryString(input));
         while (result.length() < bit) {
             result.insert(0, "0");
         }

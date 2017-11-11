@@ -44,7 +44,7 @@ public class Code {
         compTable.put("a-d", new Comp('0', '0', '0', '0', '1', '1', '1'));
         compTable.put("m-d", new Comp('1', '0', '0', '0', '1', '1', '1'));
         compTable.put("d&a", new Comp('0', '0', '0', '0', '0', '0', '0'));
-        compTable.put("D&m", new Comp('1', '0', '0', '0', '0', '0', '0'));
+        compTable.put("d&m", new Comp('1', '0', '0', '0', '0', '0', '0'));
         compTable.put("d|a", new Comp('0', '0', '1', '0', '1', '0', '1'));
         compTable.put("d|m", new Comp('1', '0', '1', '0', '1', '0', '1'));
 
