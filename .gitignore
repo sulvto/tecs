@@ -5,3 +5,4 @@ tools/
 *.out
 *.hack
 *.class
+*.vm
