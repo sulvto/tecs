@@ -47,6 +47,10 @@ public class Parser {
         System.out.println("advance:" + command);
     }
 
+    public String command() {
+        return command;
+    }
+
     public CommandType commandType() {
         if (command.startsWith("return")) {
             return CommandType.RETURN;
@@ -70,11 +74,11 @@ public class Parser {
     }
 
     public String arg1() {
-        return "";
+        return command.split("\\s+")[1];
     }
 
     public int arg2() {
-        return 1;
+        return Integer.valueOf(command.split("\\s+")[2]);
     }
 
     enum CommandType {ARITHMETIC, PUSH, POP, LABEL, GOTO, IF, FUNCTION, RETURN, CALL}
