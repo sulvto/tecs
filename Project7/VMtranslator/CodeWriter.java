@@ -18,33 +18,15 @@ public class CodeWriter {
 
     public void writeArithmetic(String command) {
         switch (command) {
-            case "add":
-                add();
-                break;
-            case "sub":
-                sub();
-                break;
-            case "neg":
-                neg();
-                break;
-            case "and":
-                and();
-                break;
-            case "or":
-                or();
-                break;
-            case "not":
-                not();
-                break;
-            case "eq":
-                eq();
-                break;
-            case "lt":
-                lt();
-                break;
-            case "gt":
-                gt();
-                break;
+            case "add": add(); break;
+            case "sub": sub(); break;
+            case "neg": neg(); break;
+            case "and": and(); break;
+            case "or":  or();  break;
+            case "not": not(); break;
+            case "eq":  eq();  break;
+            case "lt":  lt();  break;
+            case "gt":  gt();  break;
         }
     }
 
@@ -189,7 +171,7 @@ public class CodeWriter {
                 pushD();
                 break;
             case "static":
-                write("@"+(16+index));
+                write("@" + (16 + index));
                 write("D=M");
                 pushD();
                 break;
@@ -215,7 +197,7 @@ public class CodeWriter {
                 pushD();
                 break;
             case "temp":
-                write("@" + (5+index));
+                write("@" + (5 + index));
                 write("D=M");
                 pushD();
                 break;
@@ -263,7 +245,7 @@ public class CodeWriter {
                 popD();
                 break;
             case "static":
-                write("@"+(16+index));
+                write("@" + (16 + index));
                 write("D=A");
                 popD();
                 break;
@@ -287,7 +269,7 @@ public class CodeWriter {
                 popD();
                 break;
             case "temp":
-                write("@" + (5+index));
+                write("@" + (5 + index));
                 write("D=A");
                 popD();
                 break;
