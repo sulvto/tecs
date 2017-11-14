@@ -36,8 +36,8 @@ public class VMtranslator {
 
             switch (parser.commandType()) {
                 case ARITHMETIC: writer.writeArithmetic(parser.command()); break;
-                case POP: writer.writePop("",parser.arg1(),parser.arg2()); break;
-                case PUSH: writer.writePush("",parser.arg1(),parser.arg2()); break;
+                case POP: writer.writePop(parser.arg1(),parser.arg2()); break;
+                case PUSH: writer.writePush(parser.arg1(),parser.arg2()); break;
             }
         }
 

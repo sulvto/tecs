@@ -18,25 +18,44 @@ public class CodeWriter {
 
     public void writeArithmetic(String command) {
         switch (command) {
-            case "add": add(); break;
-            case "sub": sub(); break;
-            case "neg": neg(); break;
-            case "and": and(); break;
-            case "or":  or();  break;
-            case "not": not(); break;
-            case "eq":  eq();  break;
-            case "lt":  lt();  break;
-            case "gt":  gt();  break;
+            case "add":
+                add();
+                break;
+            case "sub":
+                sub();
+                break;
+            case "neg":
+                neg();
+                break;
+            case "and":
+                and();
+                break;
+            case "or":
+                or();
+                break;
+            case "not":
+                not();
+                break;
+            case "eq":
+                eq();
+                break;
+            case "lt":
+                lt();
+                break;
+            case "gt":
+                gt();
+                break;
         }
     }
 
     private void neg() {
         write("@SP");
         write("A=M-1");
-        write("M=-M");
+        write("D=0");
+        write("M=D-M");
     }
 
-    public void sub() {
+    private void sub() {
         write("@SP");
         write("AM=M-1");
         write("D=M");
@@ -44,7 +63,7 @@ public class CodeWriter {
         write("M=M-D");
     }
 
-    public void add() {
+    private void add() {
         write("@SP");
         write("AM=M-1");
         write("D=M");
@@ -52,7 +71,7 @@ public class CodeWriter {
         write("M=M+D");
     }
 
-    public void and() {
+    private void and() {
         write("@SP");
         write("AM=M-1");
         write("D=M");
@@ -60,7 +79,7 @@ public class CodeWriter {
         write("M=M&D");
     }
 
-    public void or() {
+    private void or() {
         write("@SP");
         write("AM=M-1");
         write("D=M");
@@ -74,79 +93,140 @@ public class CodeWriter {
         write("M=!M");
     }
 
-    public void eq() {
+    private void eq() {
         int flag = jumpFlag++;
         write("@SP");
         write("AM=M-1");
         write("D=M");
         write("A=A-1");
         write("D=M-D");
-        write("@TRUE" + flag);
+        write("@FALSE" + flag);
         write("D;JEQ");
 
         write("@SP");
-        write("A=M");
+        write("A=M-1");
         write("M=0");
         write("@CONTINUE" + flag);
         write("0;JMP");
 
-        write("(TRUE" + flag + ")");
+        write("(FALSE" + flag + ")");
         write("@SP");
-        write("A=M");
-        write("M=1");
+        write("A=M-1");
+        write("M=-1");
         write("(CONTINUE" + flag + ")");
     }
 
 
-    public void lt() {
+    private void lt() {
         int flag = jumpFlag++;
         write("@SP");
         write("AM=M-1");
         write("D=M");
         write("A=A-1");
         write("D=M-D");
-        write("@TRUE" + flag);
+        write("@FALSE" + flag);
         write("D;JLT");
 
         write("@SP");
-        write("A=M");
+        write("A=M-1");
         write("M=0");
         write("@CONTINUE" + flag);
         write("0;JMP");
 
-        write("(TRUE" + flag + ")");
+        write("(FALSE" + flag + ")");
         write("@SP");
-        write("A=M");
-        write("M=1");
+        write("A=M-1");
+        write("M=-1");
         write("(CONTINUE" + flag + ")");
     }
 
-    public void gt() {
+    private void gt() {
         int flag = jumpFlag++;
         write("@SP");
         write("AM=M-1");
         write("D=M");
         write("A=A-1");
         write("D=M-D");
-        write("@TRUE" + flag);
+        write("@FALSE" + flag);
         write("D;JGT");
 
         write("@SP");
-        write("A=M");
+        write("A=M-1");
         write("M=0");
         write("@CONTINUE" + flag);
         write("0;JMP");
 
-        write("(TRUE" + flag + ")");
+        write("(FALSE" + flag + ")");
         write("@SP");
-        write("A=M");
-        write("M=1");
+        write("A=M-1");
+        write("M=-1");
         write("(CONTINUE" + flag + ")");
     }
 
-    public void writePush(String command, String segment, int index) {
-        write("@" + index);
-        write("D=A");
+
+    public void writePush(String segment, int index) {
+
+        switch (segment) {
+            case "constant":
+                write("@" + index);
+                write("D=A");
+                pushD();
+                break;
+            case "argument":
+                write("@ARG");
+                write("D=M");
+                write("@" + index);
+                write("A=A+D");
+                write("D=M");
+                pushD();
+                break;
+            case "local":
+                write("@LCL");
+                write("D=M");
+                write("@" + index);
+                write("A=A+D");
+                write("D=M");
+                pushD();
+                break;
+            case "static":
+                write("@"+(16+index));
+                write("D=M");
+                pushD();
+            case "this":
+                write("@THIS");
+                write("D=M");
+                write("@" + index);
+                write("A=A+D");
+                write("D=M");
+                pushD();
+                break;
+            case "that":
+                write("@THAT");
+                write("D=M");
+                write("@" + index);
+                write("A=A+D");
+                write("D=M");
+                pushD();
+                break;
+            case "pointer":
+                write("@" + (index == 0 ? "THIS" : "THAT"));
+                write("D=M");
+                pushD();
+                break;
+            case "temp":
+                write("@R5");
+                write("D=M");
+                write("@" + index);
+                write("A=A+D");
+                write("D=M");
+                pushD();
+                break;
+            default:
+                throw new Error("");
+        }
+    }
+
+    private void pushD() {
         write("@SP");
         write("A=M");
         write("M=D");
@@ -154,11 +234,71 @@ public class CodeWriter {
         write("M=M+1");
     }
 
-    public void writePop(String command, String segment, int index) {
-
+    private void popD() {
+        write("@R13");
+        write("M=D");
+        write("@SP");
+        write("AM=M-1");
+        write("D=M");
+        write("@R13");
+        write("A=M");
+        write("M=D");
     }
 
-    public void write(String command) {
+    public void writePop(String segment, int index) {
+        switch (segment) {
+            case "constant":
+                break;
+            case "argument":
+                write("@ARG");
+                write("D=M");
+                write("@" + index);
+                write("D=A+D");
+                popD();
+                break;
+            case "local":
+                write("@LCL");
+                write("D=M");
+                write("@" + index);
+                write("D=A+D");
+                popD();
+                break;
+            case "static":
+                write("@"+(16+index));
+                write("D=A");
+                popD();
+            case "this":
+                write("@THIS");
+                write("D=M");
+                write("@" + index);
+                write("D=A+D");
+                popD();
+                break;
+            case "that":
+                write("@THAT");
+                write("D=M");
+                write("@" + index);
+                write("D=A+D");
+                popD();
+                break;
+            case "pointer":
+                write("@" + (index == 0 ? "THIS" : "THAT"));
+                write("D=A");
+                popD();
+                break;
+            case "temp":
+                write("@R5");
+                write("D=M");
+                write("@" + index);
+                write("D=A+D");
+                popD();
+                break;
+            default:
+                throw new Error("");
+        }
+    }
+
+    private void write(String command) {
         output.add(command);
     }
 
