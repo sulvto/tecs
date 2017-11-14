@@ -192,6 +192,7 @@ public class CodeWriter {
                 write("@"+(16+index));
                 write("D=M");
                 pushD();
+                break;
             case "this":
                 write("@THIS");
                 write("D=M");
@@ -214,10 +215,7 @@ public class CodeWriter {
                 pushD();
                 break;
             case "temp":
-                write("@R5");
-                write("D=M");
-                write("@" + index);
-                write("A=A+D");
+                write("@" + (5+index));
                 write("D=M");
                 pushD();
                 break;
@@ -248,6 +246,7 @@ public class CodeWriter {
     public void writePop(String segment, int index) {
         switch (segment) {
             case "constant":
+                // TODO
                 break;
             case "argument":
                 write("@ARG");
@@ -267,6 +266,7 @@ public class CodeWriter {
                 write("@"+(16+index));
                 write("D=A");
                 popD();
+                break;
             case "this":
                 write("@THIS");
                 write("D=M");
@@ -287,10 +287,8 @@ public class CodeWriter {
                 popD();
                 break;
             case "temp":
-                write("@R5");
-                write("D=M");
-                write("@" + index);
-                write("D=A+D");
+                write("@" + (5+index));
+                write("D=A");
                 popD();
                 break;
             default:
