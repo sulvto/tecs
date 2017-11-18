@@ -10,6 +10,7 @@ import java.util.List;
 public class CodeWriter {
     private List<String> output = new ArrayList<>();
     private int jumpFlag = 0;
+    private int returnFlag = 0;
     private File outputFile;
 
     public void setFileName(String filename) {
@@ -279,31 +280,151 @@ public class CodeWriter {
     }
 
     public void writeInit(){
+        // SP = 256
+        write("@256");
+        write("D=A");
+        write("@SP");
+        write("M=D");
 
+        writeCall("Sys.init", 0);
     }
 
     public void writeLabel(String label){
-
+        write("(" + label + ")");
     }
 
     public void writeGoto(String label){
-
+        // goto label
+        write("@" + label);
+        write("0;JMP");
     }
 
     public void writeIf(String label){
+        write("@SP");
+        write("AM=M-1");
+        write("D=M");
+        write("@" + label);
+        write("D;JMP");
+    }
 
+    private void pushSegment(String segment) {
+        write("@"+segment);
+        write("D=A");
+        pushD();
     }
 
     public void writeCall(String funName, int numArgs){
+        int flag = returnFlag++;
 
+        // push return-address
+        pushSegment("returnAddress" + flag);
+
+        // push lcl
+        pushSegment("LCL");
+
+        // push arg
+        pushSegment("ARG");
+
+        // push this
+        pushSegment("THIS");
+
+        // push that
+        pushSegment("THAT");
+
+        // arg = sp-n-5
+        write("@SP");
+        write("D=A");
+        write("@" + (numArgs + 5));
+        write("D=D-M");
+        write("@ARG");
+        write("M=D");
+
+        // lcl = sp
+        write("@SP");
+        write("D=A");
+        write("@LCL");
+        write("M=D");
+
+        // goto funName
+        writeGoto(funName);
+
+        // return-address
+        writeLabel("returnAddress" + flag);
     }
 
     public void writeReturn(){
+        // frame = lcl
+        write("@LCL");
+        write("D=A");
+        write("@R5");
+        write("M=D");
 
+        // ret = *(frame - 5)
+        write("@5");
+        write("D=D-A");
+        write("@R6");
+        write("M=D");
+
+        // *arg = pop()
+        write("@ARG");
+        write("D=A");
+        popD();
+
+        // sp = arg+1
+        write("@ARG");
+        write("D=A");
+        write("@1");
+        write("D=A+1");
+        write("@SP");
+        write("M=D");
+
+        // that = *(frame - 1)
+        write("@R5");
+        write("D=M");
+        write("@1");
+        write("D=D-A");
+        write("@THAT");
+        write("M=D");
+
+        // this = *(frame - 2)
+        write("@R5");
+        write("D=M");
+        write("@2");
+        write("D=D-A");
+        write("@THIS");
+        write("M=D");
+
+        // arg = *(frame - 3)
+        write("@R5");
+        write("D=M");
+        write("@3");
+        write("D=D-A");
+        write("@ARG");
+        write("M=D");
+
+        // lcl = *(frame - 4)
+        write("@R5");
+        write("D=M");
+        write("@4");
+        write("D=D-A");
+        write("@LCL");
+        write("M=D");
+
+        // goto ret
+        write("@R6");
+        write("D=M");
+        write("0;JMP");
     }
 
     public void writeFunction(String funName, int numLocals){
-
+        // fun
+        writeLabel(funName);
+        for (int i = 0; i<numLocals; i++) {
+            // push constant 0
+            write("@0");
+            write("D=A");
+            pushD();
+        }
     }
 
     private void write(String command) {

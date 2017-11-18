@@ -43,7 +43,7 @@ public class Parser {
     }
 
     public void advance() {
-        command = input.remove(0).toLowerCase();
+        command = input.remove(0);
         System.out.println("advance:" + command);
     }
 

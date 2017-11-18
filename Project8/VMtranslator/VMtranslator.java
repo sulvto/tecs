@@ -15,32 +15,50 @@ public class VMtranslator {
         new VMtranslator(new File(file)).program();
     }
 
-    private final File input;
+    private final File[] inputFiles;
     private final String outputFilename;
 
     public VMtranslator(File input) {
-        this.input = input;
-        this.outputFilename = input.getParentFile().getPath() + File.separator + input.getName().replaceAll("\\.\\w+", "") + ".asm";
+        if (input.isDirectory()) {
+            this.inputFiles = input.listFiles((dir, name) -> name.endsWith(".vm"));
+            this.outputFilename = input.getPath() + File.separator + input.getName() + ".asm";
+        } else {
+            this.inputFiles = input.getParentFile().listFiles((dir, name) -> name.endsWith(".vm"));
+            File parentFile = input.getParentFile();
+            this.outputFilename = parentFile.getPath() + File.separator + parentFile.getName() + ".asm";
+        }
     }
 
     public void program() throws IOException {
         Parser parser = new Parser();
 
-        parser.init(new FileInputStream(input));
-
         CodeWriter writer = new CodeWriter();
-        writer.setFileName(outputFilename);
 
-        while (parser.hasMoreCommands()) {
-            parser.advance();
+        writer.writeInit();
 
-            switch (parser.commandType()) {
-                case ARITHMETIC: writer.writeArithmetic(parser.command()); break;
-                case POP: writer.writePop(parser.arg1(),parser.arg2()); break;
-                case PUSH: writer.writePush(parser.arg1(),parser.arg2()); break;
+        for (File input : inputFiles) {
+
+            parser.init(new FileInputStream(input));
+
+            while (parser.hasMoreCommands()) {
+                parser.advance();
+
+                switch (parser.commandType()) {
+                    case ARITHMETIC: writer.writeArithmetic(parser.command()); break;
+                    case RETURN: writer.writeReturn(); break;
+                    case IF: writer.writeIf(parser.arg1()); break;
+                    case GOTO: writer.writeGoto(parser.arg1()); break;
+                    case LABEL: writer.writeLabel(parser.arg1()); break;
+                    case POP: writer.writePop(parser.arg1(), parser.arg2()); break;
+                    case CALL: writer.writeCall(parser.arg1(),parser.arg2());break;
+                    case PUSH: writer.writePush(parser.arg1(), parser.arg2()); break;
+                    case FUNCTION: writer.writeFunction(parser.arg1(),parser.arg2()); break;
+                    default: throw new Error("");
+                }
             }
         }
 
+        writer.setFileName(outputFilename);
         writer.close();
     }
 
