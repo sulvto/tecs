@@ -1,8 +1,3 @@
 projects/
 tools/
-*.cmp
-*.tst
-*.out
-*.hack
 *.class
-*.vm
