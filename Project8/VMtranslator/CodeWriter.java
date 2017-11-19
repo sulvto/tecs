@@ -13,7 +13,13 @@ public class CodeWriter {
     private int returnFlag = 0;
     private File outputFile;
 
-    public void setFileName(String filename) {
+    private String currentFileName;
+
+    public void setCurrentFileName(String filename) {
+        this.currentFileName = filename;
+    }
+
+    public void setOutputFileName(String filename) {
         outputFile = new File(filename);
     }
 
@@ -39,33 +45,25 @@ public class CodeWriter {
     }
 
     private void sub() {
-        write("@SP");
-        write("AM=M-1");
-        write("D=M");
+        pop();
         write("A=A-1");
         write("M=M-D");
     }
 
     private void add() {
-        write("@SP");
-        write("AM=M-1");
-        write("D=M");
+        pop();
         write("A=A-1");
         write("M=M+D");
     }
 
     private void and() {
-        write("@SP");
-        write("AM=M-1");
-        write("D=M");
+        pop();
         write("A=A-1");
         write("M=M&D");
     }
 
     private void or() {
-        write("@SP");
-        write("AM=M-1");
-        write("D=M");
+        pop();
         write("A=A-1");
         write("M=M|D");
     }
@@ -78,12 +76,10 @@ public class CodeWriter {
 
     private void eq() {
         int flag = jumpFlag++;
-        write("@SP");
-        write("AM=M-1");
-        write("D=M");
+        pop();
         write("A=A-1");
         write("D=M-D");
-        write("@FALSE" + flag);
+        write("@TRUE" + flag);
         write("D;JEQ");
 
         write("@SP");
@@ -92,7 +88,7 @@ public class CodeWriter {
         write("@CONTINUE" + flag);
         write("0;JMP");
 
-        write("(FALSE" + flag + ")");
+        write("(TRUE" + flag + ")");
         write("@SP");
         write("A=M-1");
         write("M=-1");
@@ -102,12 +98,10 @@ public class CodeWriter {
 
     private void lt() {
         int flag = jumpFlag++;
-        write("@SP");
-        write("AM=M-1");
-        write("D=M");
+        pop();
         write("A=A-1");
         write("D=M-D");
-        write("@FALSE" + flag);
+        write("@TRUE" + flag);
         write("D;JLT");
 
         write("@SP");
@@ -116,7 +110,7 @@ public class CodeWriter {
         write("@CONTINUE" + flag);
         write("0;JMP");
 
-        write("(FALSE" + flag + ")");
+        write("(TRUE" + flag + ")");
         write("@SP");
         write("A=M-1");
         write("M=-1");
@@ -125,12 +119,10 @@ public class CodeWriter {
 
     private void gt() {
         int flag = jumpFlag++;
-        write("@SP");
-        write("AM=M-1");
-        write("D=M");
+        pop();
         write("A=A-1");
         write("D=M-D");
-        write("@FALSE" + flag);
+        write("@TRUE" + flag);
         write("D;JGT");
 
         write("@SP");
@@ -139,7 +131,7 @@ public class CodeWriter {
         write("@CONTINUE" + flag);
         write("0;JMP");
 
-        write("(FALSE" + flag + ")");
+        write("(TRUE" + flag + ")");
         write("@SP");
         write("A=M-1");
         write("M=-1");
@@ -172,7 +164,7 @@ public class CodeWriter {
                 pushD();
                 break;
             case "static":
-                write("@" + (16 + index));
+                write("@"+currentFileName+"." + index);
                 write("D=M");
                 pushD();
                 break;
@@ -218,12 +210,16 @@ public class CodeWriter {
     private void popD() {
         write("@R13");
         write("M=D");
-        write("@SP");
-        write("AM=M-1");
-        write("D=M");
+        pop();
         write("@R13");
         write("A=M");
         write("M=D");
+    }
+
+    private void pop() {
+        write("@SP");
+        write("AM=M-1");
+        write("D=M");
     }
 
     public void writePop(String segment, int index) {
@@ -246,7 +242,7 @@ public class CodeWriter {
                 popD();
                 break;
             case "static":
-                write("@" + (16 + index));
+                write("@"+currentFileName+"." + index);
                 write("D=A");
                 popD();
                 break;
@@ -300,16 +296,16 @@ public class CodeWriter {
     }
 
     public void writeIf(String label){
-        write("@SP");
-        write("AM=M-1");
-        write("D=M");
+        pop();
         write("@" + label);
-        write("D;JMP");
+        write("D;JNE");
     }
 
     private void pushSegment(String segment) {
         write("@"+segment);
         write("D=A");
+        write("A=D");
+        write("D=M");
         pushD();
     }
 
@@ -317,7 +313,9 @@ public class CodeWriter {
         int flag = returnFlag++;
 
         // push return-address
-        pushSegment("returnAddress" + flag);
+        write("@returnAddress" + flag);
+        write("D=A");
+        pushD();
 
         // push lcl
         pushSegment("LCL");
@@ -333,15 +331,15 @@ public class CodeWriter {
 
         // arg = sp-n-5
         write("@SP");
-        write("D=A");
+        write("D=M");
         write("@" + (numArgs + 5));
-        write("D=D-M");
+        write("D=D-A");
         write("@ARG");
         write("M=D");
 
         // lcl = sp
         write("@SP");
-        write("D=A");
+        write("D=M");
         write("@LCL");
         write("M=D");
 
@@ -353,9 +351,13 @@ public class CodeWriter {
     }
 
     public void writeReturn(){
+
+        // R5 -> frame
+        // R6 -> ret
+
         // frame = lcl
         write("@LCL");
-        write("D=A");
+        write("D=M");
         write("@R5");
         write("M=D");
 
@@ -366,15 +368,16 @@ public class CodeWriter {
         write("M=D");
 
         // *arg = pop()
+        pop();
         write("@ARG");
-        write("D=A");
-        popD();
+        write("A=M");
+        write("M=D");
 
         // sp = arg+1
-        write("@ARG");
-        write("D=A");
         write("@1");
-        write("D=A+1");
+        write("D=A");
+        write("@ARG");
+        write("D=M+D");
         write("@SP");
         write("M=D");
 
@@ -382,7 +385,8 @@ public class CodeWriter {
         write("@R5");
         write("D=M");
         write("@1");
-        write("D=D-A");
+        write("A=D-A");
+        write("D=M");
         write("@THAT");
         write("M=D");
 
@@ -390,7 +394,8 @@ public class CodeWriter {
         write("@R5");
         write("D=M");
         write("@2");
-        write("D=D-A");
+        write("A=D-A");
+        write("D=M");
         write("@THIS");
         write("M=D");
 
@@ -398,7 +403,8 @@ public class CodeWriter {
         write("@R5");
         write("D=M");
         write("@3");
-        write("D=D-A");
+        write("A=D-A");
+        write("D=M");
         write("@ARG");
         write("M=D");
 
@@ -406,13 +412,15 @@ public class CodeWriter {
         write("@R5");
         write("D=M");
         write("@4");
-        write("D=D-A");
+        write("A=D-A");
+        write("D=M");
         write("@LCL");
         write("M=D");
 
         // goto ret
         write("@R6");
-        write("D=M");
+        write("A=M");
+        write("A=M");
         write("0;JMP");
     }
 

@@ -38,6 +38,7 @@ public class VMtranslator {
 
         for (File input : inputFiles) {
 
+            writer.setCurrentFileName(input.getName().replaceAll("\\..*",""));
             parser.init(new FileInputStream(input));
 
             while (parser.hasMoreCommands()) {
@@ -58,7 +59,7 @@ public class VMtranslator {
             }
         }
 
-        writer.setFileName(outputFilename);
+        writer.setOutputFileName(outputFilename);
         writer.close();
     }
 
